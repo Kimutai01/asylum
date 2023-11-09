@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Map of Selected Countries</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+    />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script
+      src="https://maps.googleapis.com/maps/api/js?key={{api}}&libraries=places&callback=initMap"
+      defer
+    ></script>
+    <style>
+      #map {
+        height: 100%;
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    {{coordinates_list}}
+
+    <!-- <script>
+      var map = L.map("map").setView([0, 0], 2);
+
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+      }).addTo(map);
+
+      // Country names filter
+      //let countryNamesToFilter = "{{countries}}";
+      //console.log(countryNamesToFilter);
+      let countryNamesToFilter = [
+        "Austria",
+        "Germany",
+        "Hungary",
+        "Slovakia",
+        "Romania",
+        "Belgium",
+      ];
+
+      fetch(
+        "https://gisco-services.ec.europa.eu/distribution/v2/countries/geojson/CNTR_RG_03M_2020_4326.geojson"
+      )
+        .then(function (response) {
+          return response.json();
+        })
+        .then(function (geojsonData) {
+          // Apply filter based on name
+          var countriesToDisplay = geojsonData.features.filter(function (
+            feature
+          ) {
+            // use countries from the view to filter
+            return countryNamesToFilter.includes(feature.properties.NAME_ENGL);
+          });
+
+          var countryLayer = L.geoJSON(countriesToDisplay, {
+            style: function (feature) {
+              return { color: "red", fillOpacity: 0.3, weight: 0.1 };
+            },
+            onEachFeature: function (feature, layer) {
+              // Customize the popup
+              var popupContent = feature.properties.NAME_ENGL;
+              layer.bindPopup(popupContent);
+            },
+          }).addTo(map);
+        })
+        .catch(function (error) {
+          console.error("Error loading GeoJSON data:", error);
+        });
+    </script> -->
+
+    <!-- <script>
+      var map;
+      function initMap() {
+        // The location of the place
+        var location = { lat: {{latitude}}, lng: {{longitude}} };
+
+        // The map, centered at the location
+        map = new google.maps.Map(document.getElementById("map"), {
+          zoom: 8,
+          center: location,
+        });
+
+        // The marker, positioned at the location
+        var marker = new google.maps.Marker({
+          position: location,
+          map: map,
+        });
+      }
+    </script> -->
+
+    <script type="text/javascript">
+      var coordinatesList = JSON.parse("{{ coordinates_list_json|safe }}");
+      function initMap() {
+        // New map
+        var map = new google.maps.Map(document.getElementById("map"), {
+          zoom: 4,
+          center: { lat: 54.526, lng: 15.2551 }, // Central point of Europe
+        });
+
+        // An array of markers (representing some countries in Europe)
+        var markers = [
+          { coords: { lat: 52.52, lng: 13.405 }, content: "Germany" },
+          { coords: { lat: 48.8566, lng: 2.3522 }, content: "France" },
+          { coords: { lat: 41.9028, lng: 12.4964 }, content: "Italy" },
+          { coords: { lat: 40.4168, lng: -3.7038 }, content: "Spain" },
+          // Add more markers for other European countries here
+        ];
+
+        // Extend bounds for each marker
+        var bounds = new google.maps.LatLngBounds();
+        for (var i = 0; i < coordinatesList.length; i++) {
+          addMarker(coordinatesList[i]);
+        }
+
+        // Add Marker Function
+        function addMarker(props) {
+          var marker = new google.maps.Marker({
+            position: props.coords,
+            map: map,
+          });
+
+          // Check content
+          if (props.content) {
+            var infoWindow = new google.maps.InfoWindow({
+              content: props.content,
+            });
+
+            marker.addListener("click", function () {
+              infoWindow.open(map, marker);
+            });
+          }
+
+          // Extend the bounds to include each marker's position
+          bounds.extend(marker.position);
+        }
+
+        // Now fit the map to the newly inclusive bounds
+        map.fitBounds(bounds);
+      }
+    </script>
+  </body>
+</html>
