@@ -37,7 +37,7 @@ def index(request):
 
     # Encode the address for URL
     address = requests.utils.quote(address)
-
+    api_key = ''
     print(all_data)
     items_list = [item for entry in all_data for item in entry['items']]
     print(items_list)
@@ -45,6 +45,15 @@ def index(request):
     # Create the URL for the request
     for dat in items_list:
         print(f"coa_name: {dat['coa_name']}")
+        card_data= {
+            'year': dat['year'],
+            'coo_name': dat['coo_name'],
+            'coa_name': dat['coa_name'],
+            'applications': dat['applied'],
+            'decision_level': dat['dec_level'],
+        }
+        print(f"card_data: {card_data}")
+        
         geocode_url = f"https://maps.googleapis.com/maps/api/geocode/json?address={dat['coa_name']}&key={api_key}"
         
         geocode_response = requests.get(geocode_url)
@@ -60,7 +69,8 @@ def index(request):
                 coa_name = dat['coa_name']
                 coordinates_list.append({
                     'coords': {'lat': latitude, 'lng': longitude},
-                    'content': coa_name
+                    'content': coa_name,
+                    'card_data': card_data
                 })
                 print(f"Coordinates for {coa_name}: {latitude}, {longitude}")
             else:
@@ -80,89 +90,8 @@ def index(request):
 
         
         
-    # coordinates_list = []
-
-    # # Make the GET request to the Google Maps Geocoding API
-    # response = requests.get(url)
-
-    # Check if the request was successful
-    # if response.status_code == 200:
-    #     # Parse the JSON response
-    #     geocode_data = response.json()
-
-    #     # Pretty-print the JSON data
-    #     print(json.dumps(geocode_data, indent=4))
-    # else:
-    #     print(f"Error: {response.status_code}")
-        
-    #     # map_data = [{a:1, b:2},{l}]
-
-    # # Extracting the latitude and longitude from the response
-    # if geocode_data["status"] == "OK":
-    #     latitude = geocode_data["results"][0]["geometry"]["location"]["lat"]
-    #     longitude = geocode_data["results"][0]["geometry"]["location"]["lng"]
-    #     coordinates_list.append({
-    #             'coords': {'lat': latitude, 'lng': longitude},
-    #             'content': dat['coa_name']
-    #         })
-    #     print(coordinates_list)
-        
-    #     print(f"Latitude: {latitude}, Longitude: {longitude}")
-    #     context = {
-    #         "all_data": all_data,
-    #         "latitude": latitude,
-    #         "longitude": longitude,
-    #         "coa_countries": coa_countries,
-    #         "coo": coo,
-    #     }
-    # else:
-    #     print("Geocoding failed with status: " + geocode_data["status"])
+  
     
     context['coordinates_list_json'] = json.dumps(coordinates_list)
             
     return render(request, 'map/index.html', context)
-
-
-#  for year in year_range:
-#             page = 1
-#             while True:
-#                 # Define the parameters for the API request, including the page
-#                 params = {
-#                     "limit": 100,  # Adjust the limit per page as needed
-#                     "yearFrom": year,
-#                     "yearTo": year,
-#                     "coo": coo,
-#                     "coa": coa,
-#                     "cf_type": "iso",
-#                     "page": page
-#                  }
-
-
-#                 # Make a GET request to the API
-#                 response = requests.get(url, params=params)
-
-#                 # Check if the request was successful (status code 200)
-#                 if response.status_code == 200:
-#                     # Parse the JSON response
-#                     data = response.json()
-#                     print(data['items'])
-#                     all_data.append(data.items)
-
-#                     # Loop through the items in the response
-                    
-
-#                         # Insert data into the PostgreSQL database
-                        
-
-#                     # Check if there are more pages
-#                     if data.get("maxPages", 1) <= page:
-#                         break
-#                     else:
-#                         page += 1
-                
-                    
-#             else:
-#                 print(f"Failed to retrieve data for coa={coa}, year={year}, page={page}. Status code:",
-#                       response.status_code)
-#                 break
-    

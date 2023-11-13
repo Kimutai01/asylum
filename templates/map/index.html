@@ -9,8 +9,16 @@
       href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
     />
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
+    {% comment %}
     <script
-      src="https://maps.googleapis.com/maps/api/js?key={{api}}&libraries=places&callback=initMap"
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCofEHIsoFbtmxqUvDMQgbHTRIfJ1yrARI&libraries=places&callback=initMap"
+      defer
+    ></script>
+    {% endcomment %}
+    <script
+      src="https://maps.googleapis.com/maps/api/js?key=api&callback=initMap"
+      async
       defer
     ></script>
     <style>
@@ -29,125 +37,143 @@
     <div id="map"></div>
     {{coordinates_list}}
 
-    <!-- <script>
-      var map = L.map("map").setView([0, 0], 2);
-
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 19,
-      }).addTo(map);
-
-      // Country names filter
-      //let countryNamesToFilter = "{{countries}}";
-      //console.log(countryNamesToFilter);
-      let countryNamesToFilter = [
-        "Austria",
-        "Germany",
-        "Hungary",
-        "Slovakia",
-        "Romania",
-        "Belgium",
-      ];
-
-      fetch(
-        "https://gisco-services.ec.europa.eu/distribution/v2/countries/geojson/CNTR_RG_03M_2020_4326.geojson"
-      )
-        .then(function (response) {
-          return response.json();
-        })
-        .then(function (geojsonData) {
-          // Apply filter based on name
-          var countriesToDisplay = geojsonData.features.filter(function (
-            feature
-          ) {
-            // use countries from the view to filter
-            return countryNamesToFilter.includes(feature.properties.NAME_ENGL);
-          });
-
-          var countryLayer = L.geoJSON(countriesToDisplay, {
-            style: function (feature) {
-              return { color: "red", fillOpacity: 0.3, weight: 0.1 };
-            },
-            onEachFeature: function (feature, layer) {
-              // Customize the popup
-              var popupContent = feature.properties.NAME_ENGL;
-              layer.bindPopup(popupContent);
-            },
-          }).addTo(map);
-        })
-        .catch(function (error) {
-          console.error("Error loading GeoJSON data:", error);
-        });
-    </script> -->
-
-    <!-- <script>
-      var map;
-      function initMap() {
-        // The location of the place
-        var location = { lat: {{latitude}}, lng: {{longitude}} };
-
-        // The map, centered at the location
-        map = new google.maps.Map(document.getElementById("map"), {
-          zoom: 8,
-          center: location,
-        });
-
-        // The marker, positioned at the location
-        var marker = new google.maps.Marker({
-          position: location,
-          map: map,
-        });
-      }
-    </script> -->
+    <div id="info-card" style="display: none"></div>
+    <button onclick="drawDemo()">Draw Demo</button>
 
     <script type="text/javascript">
-      var coordinatesList = JSON.parse("{{ coordinates_list_json|safe }}");
-      function initMap() {
-        // New map
-        var map = new google.maps.Map(document.getElementById("map"), {
-          zoom: 4,
-          center: { lat: 54.526, lng: 15.2551 }, // Central point of Europe
-        });
+                        var map;
+                                    var ukraineCoords = { lat: 48.3794, lng: 31.1656 }; // Approximate coordinates for Ukraine
 
-        // An array of markers (representing some countries in Europe)
-        var markers = [
-          { coords: { lat: 52.52, lng: 13.405 }, content: "Germany" },
-          { coords: { lat: 48.8566, lng: 2.3522 }, content: "France" },
-          { coords: { lat: 41.9028, lng: 12.4964 }, content: "Italy" },
-          { coords: { lat: 40.4168, lng: -3.7038 }, content: "Spain" },
-          // Add more markers for other European countries here
-        ];
+                                    var coordinatesList = JSON.parse(
+                                      "{{ coordinates_list_json|safe|escapejs }}"
+                                    );
+                                    console.log(coordinatesList);
+                                    function initMap() {
+                                      // New map
+                                      map = new google.maps.Map(document.getElementById("map"), {
+                                        zoom: 4,
+                                        center: { lat: 54.526, lng: 15.2551 }, // Central point of Europe
+                                      });
 
-        // Extend bounds for each marker
-        var bounds = new google.maps.LatLngBounds();
-        for (var i = 0; i < coordinatesList.length; i++) {
-          addMarker(coordinatesList[i]);
-        }
+                                      // Extend bounds for each marker
+                                      var bounds = new google.maps.LatLngBounds();
+                                      for (var i = 0; i < coordinatesList.length; i++) {
+                                        addMarker(coordinatesList[i]);
+                                      }
 
-        // Add Marker Function
-        function addMarker(props) {
+                                      addUkMarker({ coords: ukraineCoords });
+
+                                      // Add Marker Function
+                                      function addMarker(props) {
+                                        var marker = new google.maps.Marker({
+                                          position: props.coords,
+                                          map: map,
+                                        });
+
+                                        console.log(props);
+
+                                        // Check content
+                                        if (props.content) {
+                                          var infoWindow = new google.maps.InfoWindow({
+                                            content: props.content,
+                                          });
+
+                                          marker.addListener("click", function () {
+                                            // Update card content
+                                            updateInfoCard(props.card_data);
+                                            drawLineToUkraine(props.coords);
+                                          });
+                                        }
+
+                                        // Extend the bounds to include each marker's position
+                                        bounds.extend(marker.position);
+                                      }
+
+                                      function addUkMarker(props) {
           var marker = new google.maps.Marker({
-            position: props.coords,
-            map: map,
+              position: props.coords,
+              map: map,
+              icon: {
+                  url: 'data:image/png;base64,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', // URL to your custom colored icon
+                  scaledSize: new google.maps.Size(40, 40) // You can adjust the size
+              }
           });
 
-          // Check content
-          if (props.content) {
-            var infoWindow = new google.maps.InfoWindow({
-              content: props.content,
-            });
-
-            marker.addListener("click", function () {
-              infoWindow.open(map, marker);
-            });
-          }
-
-          // Extend the bounds to include each marker's position
-          bounds.extend(marker.position);
-        }
-
-        // Now fit the map to the newly inclusive bounds
-        map.fitBounds(bounds);
+          // ... rest of your existing code
       }
+
+                                      // Now fit the map to the newly inclusive bounds
+                                      map.fitBounds(bounds);
+                                    }
+
+                                    function updateInfoCard(data) {
+                                      var card = document.getElementById("info-card");
+                                      card.style.display = "block";
+                                      card.innerHTML = `
+                                      <p>Year: ${data.year}</p>
+                                      <p>Country of Origin: ${data.coo_name}</p>
+                                      <p>Country of Asylum: ${data.coa_name}</p>
+                                      <p>Applications: ${data.applications}</p>
+                                      <p>Decision Level: ${data.decision_level}</p>
+                                      `;
+                                    }
+                                    var currentLine = null;
+                                  function drawLineToUkraine(coaCoords) {
+                if (currentLine) {
+                    currentLine.setMap(null); // Remove existing line if present
+                }
+
+                var lineSymbol = {
+                    path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                };
+
+                var line = new google.maps.Polyline({
+                    path: [ukraineCoords, coaCoords],
+                    icons: [{
+                        icon: lineSymbol,
+                        offset: '0%'
+                    }],
+                    map: map,
+                    geodesic: true,
+                    strokeColor: "red",
+                    strokeOpacity: 1.0,
+                    strokeWeight: 2,
+                });
+
+                currentLine = line; // Update current line
+
+                animateArrow(line); // Call the function to animate the arrow
+            }
+
+            function animateArrow(line) {
+                var count = 0;
+                window.setInterval(function() {
+                    count = (count + 1) % 200; // Adjust speed and loop
+
+                    var icons = line.get('icons');
+                    icons[0].offset = (count / 2) + '%'; // Move the icon
+                    line.set('icons', icons);
+                }, 20); // Adjust for speed
+            }
+
+
+                                    {% comment %} function drawDemo() {
+                      function drawLine(startCoords, endCoords) {
+                          const line = new google.maps.Polyline({
+                              path: [startCoords, endCoords],
+                              geodesic: true,
+                              strokeColor: 'red',
+                              strokeOpacity: 1.0,
+                              strokeWeight: 2,
+                          });
+
+                          line.setMap(map);
+                      }
+
+                      const startCoords = { lat: 47.516231, lng: 14.550072 };
+                      const endCoords = { lat: 46.227638, lng: 2.213749 };
+                      drawLine(startCoords, endCoords);
+                  } {% endcomment %}
     </script>
   </body>
 </html>
